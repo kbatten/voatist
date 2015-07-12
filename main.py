@@ -24,7 +24,7 @@ def main():
         print(subm.post("pong"))
 
     for com in voat.comment_stream():
-        single_line("[+{} -{}] {}".format(com.upvotes, com.downvotes, com.content))
+        single_line(com)
     print()
 
     print("{}'s messages:".format(username))
@@ -39,11 +39,11 @@ def main():
             single_line("*", sub)
             if not one:
                 for subm in sub.submissions():
-                    single_line("  [+{} -{}] {}".format(subm.upvotes, subm.downvotes, subm.title))
+                    single_line(" ", subm)
                     if not one:
                         for com in subm.comments():
-                            single_line("    [+{} -{}] {}".format(com.upvotes, com.downvotes, com.content))
-                            one = True
+                            single_line("   ", com)
+                            one = False
         elif sub.type == "set":
             single_line(">", sub)
 

@@ -87,13 +87,23 @@ class Submission(object):
     def __init__(self, api, data):
         self.api = api
         self.id = data["id"]
-        self.subverse = data["subverse"]
-        self.title = data["title"]
+        self.comment_count = data["commentCount"]
+        self.date = data["date"]
         self.upvotes = data["upVotes"]
         self.downvotes = data["downVotes"]
+        self.last_edit_date = data["lastEditDate"]
+        self.views = data["views"]
+        self.username = data["userName"]
+        self.subverse = data["subverse"]
+        self.thumbnail = data["thumbnail"]
+        self.title = data["title"]
+        self.type = data["type"]
+        self.url = data.get("url")
+        self.content = data.get("content")
+        self.formatted_content = data.get("formattedContent")
 
     def __str__(self):
-        return "{}\n{}\n{}".format(self.title, self.url, self.content)
+        return "[+{} -{}] @{} {}\n{}\n{}".format(self.upvotes, self.downvotes, self.username, self.title, self.url, self.content)
 
     def comments(self):
         coms = []
@@ -109,16 +119,22 @@ class Submission(object):
 class Comment(object):
     def __init__(self, api, data):
         self.api = api
+        self.id = data["id"]
+        self.parent_id = data["parentID"]
+        self.submission_id = data["submissionID"]
+        self.subverse = data["subverse"]
+        self.date = data["date"]
+        self.last_edit_data = data["lastEditDate"]
         self.upvotes = data["upVotes"]
         self.downvotes = data["downVotes"]
+        self.username = data["userName"]
+        self.child_count = data["childCount"]
+        self.level = data["level"]
         self.content = data["content"]
+        self.formatted_content = data["formattedContent"]
 
     def __str__(self):
-        limit = 60
-        s = self.content.replace("\n", " ").replace("\r", "")
-        if len(s) > limit:
-            ss = "{}...".format(s[:limit-3])
-        return s
+        return "[+{} -{}] @{}\n{}".format(self.upvotes, self.downvotes, self.username, self.content)
 
 
 class Message(object):
