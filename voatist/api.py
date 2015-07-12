@@ -1,14 +1,22 @@
 import time
+import os
 
 import requests
 
 class Api(object):
-    def __init__(self, apikey, useragent, username=None, password=None, access_token=None):
+    def __init__(self, apikey, useragent, username=None, password=None, access_token_file=None):
         self.apikey = apikey
         self.useragent = useragent
         self.username = username
         self.password = password
-        self.access_token = access_token
+        self.access_token_file = access_token_file
+
+        self.access_token = None
+        if self.access_token_file is not None:
+            if os.path.exists(self.access_token_file):
+                with open(self.access_token_file) as f:
+                    self.access_token = f.read()
+
         self.next_request_time = 0
         self.base_url = "https://fakevout.azurewebsites.net"
 
@@ -82,6 +90,9 @@ class Api(object):
             res = requests.post(url, headers=headers, data=data)
             if res.status_code == 200:
                 self.access_token = res.json()["access_token"]
+                if self.access_token_file is not None:
+                    with open(self.access_token_file, "w") as f:
+                        f.write(self.access_token)
                 return
 
             # see if we need to increase our throttling

@@ -5,16 +5,7 @@ import os
 import voatist
 
 def main():
-    if os.path.exists("access_token"):
-        with open("access_token") as f:
-            access_token = f.read()
-    else:
-        access_token = None
-    voat = voatist.Voat("voatist", "0.0.1", "X_____X", os.environ.get("VOAT_API_KEY"), os.environ.get("VOAT_API_USERNAME"), os.environ.get("VOAT_API_PASSWORD"), access_token)
-
-    voat.api.authorize()
-    with open("access_token", "w") as f:
-        f.write(voat.api.access_token)
+    voat = voatist.Voat("voatist", "0.0.1", "X_____X", os.environ.get("VOAT_API_KEY"), os.environ.get("VOAT_API_USERNAME"), os.environ.get("VOAT_API_PASSWORD"), "access_token")
 
     username = "X_____X"
 
