@@ -39,14 +39,14 @@ def main():
         return
 
     p = False
-    for com in voat.submission_stream():
+    for com in voat.new_submissions():
         single_line(com)
         p = True
     if p is True:
         print()
 
     p = False
-    for com in voat.comment_stream():
+    for com in voat.new_comments():
         single_line(com)
         p = True
     if p is True:

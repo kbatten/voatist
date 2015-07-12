@@ -13,13 +13,13 @@ class Voat(object):
     def subverse(self, name):
         return SubverseRef.from_name(self.api, name)
 
-    def submission_stream(self):
+    def new_submissions(self):
         subms = []
         for subm in self.api.get("api/v1/stream/submissions"):
             subms.append(Submission(self.api, subm))
         return subms
 
-    def comment_stream(self):
+    def new_comments(self):
         coms = []
         for com in self.api.get("api/v1/stream/comments"):
             coms.append(Comment(self.api, com))

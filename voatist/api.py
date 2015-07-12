@@ -5,10 +5,10 @@ import sys
 
 import requests
 
-THROTTLE_GROW = 2
-THROTTLE_DECAY = 1.3
+THROTTLE_GROW = 3
+THROTTLE_DECAY = 0.8
 THROTTLE_MIN = 1.1
-THROTTLE_MAX = 220
+THROTTLE_MAX = 275
 
 LOGGING = True
 
@@ -61,10 +61,6 @@ class Api(object):
         while True:
             while time.time() < self.next_request_time:
                 time.sleep(self.next_request_time - time.time())
-            # decay thottling
-            self.throttle /= THROTTLE_DECAY
-            if self.throttle < THROTTLE_MIN:
-                self.throttle = THROTTLE_MIN
             self.next_request_time = time.time() + self.throttle
 
             body = {k: v for k, v in body.items() if v is not None} if body is not None else None
@@ -98,6 +94,7 @@ class Api(object):
                     self.access_token = res.json()["access_token"]
                     with open(self.access_token_file, "w") as f:
                         f.write(self.access_token)
+                    self.throttle_decay()
                     return
 
             data = res.json().get("data")
@@ -105,22 +102,38 @@ class Api(object):
             error = res.json().get("error")
 
             if res.status_code == 200 and success is True:
+                self.throttle_decay()
                 return data
 
             # see if we need to reauth
             if res.status_code == 401 and verb != "reauthorize":
+                log("reauthorize", error)
                 self.reauthorize()
                 continue
+            elif res.status_code == 401 and verb == "reauthorize":
+                log("reauthorization error", error)
 
             # see if we need to increase our throttling
             if res.status_code == 429 or (success is False and error["type"] == "ApiThrottleLimit"):
-                self.throttle *= THROTTLE_GROW
-                if self.throttle > THROTTLE_MAX:
-                    self.throttle = THROTTLE_MAX
-                    log("backoff to one request every", self.throttle, "seconds")
+                self.throttle_grow()
                 continue
 
             raise Exception(res, url, params, res.content)
+
+    def throttle_decay(self):
+        self.throttle *= THROTTLE_DECAY
+        if self.throttle < THROTTLE_MIN:
+            self.throttle = THROTTLE_MIN
+        else:
+            log("backoff to one request every", int(self.throttle), "seconds")
+
+    def throttle_grow(self):
+        self.throttle *= THROTTLE_GROW
+        if self.throttle > THROTTLE_MAX:
+            self.throttle = THROTTLE_MAX
+        log("backoff to one request every", int(self.throttle), "seconds", verb, url, error)
+
+
 
 def log(*msg):
     if LOGGING is False:
