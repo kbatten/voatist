@@ -117,6 +117,15 @@ class Submission(object):
             coms.append(Comment(self.api, com))
         return coms
 
+    def vote(self, value):
+        if value <= -1:
+            value = -1
+        elif value >= 1:
+            value = 1
+        else:
+            value = 0
+        self.api.post("api/v1/vote/submission/{}/{}".format(self.id, value))
+
     def post(self, value):
         com = self.api.post("api/v1/v/{}/{}/comment".format(self.subverse, self.id), {"value": value})
         return Comment(self.api, com)
@@ -162,6 +171,19 @@ class Comment(object):
 
     def __str__(self):
         return "[+{} -{}] @{}\n{}".format(self.upvotes, self.downvotes, self.username, self.content)
+
+    def vote(self, value):
+        if value <= -1:
+            value = -1
+        elif value >= 1:
+            value = 1
+        else:
+            value = 0
+        self.api.post("api/v1/vote/comment/{}/{}".format(self.id, value))
+
+    def post(self, value):
+        com = self.api.post("api/v1/comments/{}".format(self.id), {"value": value})
+        return Comment(self.api, com)
 
     def edit(self, value):
         com = self.api.put("api/v1/comments/{}".format(self.id), {"value": value})
