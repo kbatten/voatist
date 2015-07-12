@@ -5,9 +5,15 @@ import os
 import voatist
 
 def main():
-    voat = voatist.Voat("voatist", "0.0.1", "X_____X", os.environ.get("VOAT_API_KEY"))
+    voat = voatist.Voat("voatist", "0.0.1", "X_____X", os.environ.get("VOAT_API_KEY"), os.environ.get("VOAT_API_USERNAME"), os.environ.get("VOAT_API_PASSWORD"))
 
     username = "X_____X"
+
+    print("{}'s messages:".format(username))
+    for msg in voat.user(username).messages():
+        print(msg)
+        print()
+
     print("{}'s subscriptions:".format(username))
     one_sub = False
     for sub in voat.user(username).subscriptions():
