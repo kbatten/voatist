@@ -9,8 +9,19 @@ def main():
 
     username = "X_____X"
     print("{}'s subscriptions:".format(username))
-    for v in voat.user(username).subscriptions():
-        print("*", v["name"])
+    one_sub = False
+    for sub in voat.user(username).subscriptions():
+        if sub.type == "subverse":
+            print("*", sub)
+            if not one_sub:
+                for subm in sub.submissions():
+                    print("  [+{} -{}] {}".format(subm.upvotes, subm.downvotes, subm.title))
+                    for com in subm.comments():
+                        print("    [+{} -{}] {}".format(com.upvotes, com.downvotes, com.content[:20]), "...")
+                one_sub = True
+        elif sub.type == "set":
+            print(">", sub)
+
 
 if __name__ == "__main__":
     main()

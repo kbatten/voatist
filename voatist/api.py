@@ -13,10 +13,9 @@ class Api(object):
     def get(self, path, **params):
         while True:
             while time.time() < self.next_request_time:
-                print("sleeping for {} seconds".format(self.next_request_time - time.time()))
                 time.sleep(self.next_request_time - time.time())
             # decay thottling
-            self.throttle /= 2
+            self.throttle -= 1
             if self.throttle < 1.1:
                 self.throttle = 1.1
             self.next_request_time = time.time() + self.throttle
@@ -28,17 +27,12 @@ class Api(object):
                 "Voat-ApiKey": self.apikey,
             }
             res = requests.get(url, params=params, headers=headers)
-            if res.status_code != 200:
-                raise Exception(res, res.content)
-
-            json = res.json()
-            if json["success"]:
+            if res.status_code == 200:
                 return res.json()["data"]
 
-            if json["error"]["type"] == "ApiThrottleLimit":
+            # raise on any non-200 that isn't throttling
+            if res.status_code != 429:
+                raise Exception(res, url, params, headers, res.content)
+
+            if res.json()["error"]["type"] == "ApiThrottleLimit":
                 self.throttle *= 2
-                continue
-
-            raise Exception(json["error"]["type"], json["error"]["message"])
-
-    
