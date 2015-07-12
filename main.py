@@ -26,16 +26,17 @@ def main():
         print()
 
     print("{}'s subscriptions:".format(username))
-    one_sub = False
+    one = False
     for sub in voat.user(username).subscriptions():
         if sub.type == "subverse":
             single_line("*", sub)
-            if not one_sub:
+            if not one:
                 for subm in sub.submissions():
                     single_line("  [+{} -{}] {}".format(subm.upvotes, subm.downvotes, subm.title))
-                    for com in subm.comments():
-                        single_line("    [+{} -{}] {}".format(com.upvotes, com.downvotes, com.content))
-                one_sub = True
+                    if not one:
+                        for com in subm.comments():
+                            single_line("    [+{} -{}] {}".format(com.upvotes, com.downvotes, com.content))
+                            one = True
         elif sub.type == "set":
             single_line(">", sub)
 
