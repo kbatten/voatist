@@ -4,12 +4,13 @@ import os
 import requests
 
 class Api(object):
-    def __init__(self, apikey, useragent, username=None, password=None, access_token_file=None):
+    def __init__(self, apikey, useragent, username, password, access_token_file, base_url):
         self.apikey = apikey
         self.useragent = useragent
         self.username = username
         self.password = password
         self.access_token_file = access_token_file
+        self.base_url = base_url
 
         self.access_token = None
         if self.access_token_file is not None:
@@ -18,7 +19,6 @@ class Api(object):
                     self.access_token = f.read()
 
         self.next_request_time = 0
-        self.base_url = "https://fakevout.azurewebsites.net"
 
         # at 1 per second, throttle is 1
         # at 20 per minute (60/20), throttle is 3

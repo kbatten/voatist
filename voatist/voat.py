@@ -1,11 +1,11 @@
 from .api import Api
 
 class Voat(object):
-    def __init__(self, appid, version, owner, apikey, username=None, password=None, access_token_file=None):
+    def __init__(self, appid, version, owner, apikey, username=None, password=None, access_token_file=None, base_url="https://fakevout.azurewebsites.net"):
         self.appid = appid
         self.version = version
         self.owner = owner
-        self.api = Api(apikey, "{}:{} (by @{})".format(appid, version, owner), username, password, access_token_file)
+        self.api = Api(apikey, "{}:{} (by @{})".format(appid, version, owner), username, password, access_token_file, base_url)
 
     def user(self, username):
         return Voater(self.api, username)
