@@ -10,6 +10,9 @@ class Voat(object):
     def user(self, username):
         return Voater(self.api, username)
 
+    def subverse(self, name):
+        return Subverse.from_name(self.api, name)
+
     def comment_stream(self):
         coms = []
         for com in self.api.get("api/v1/stream/comments"):
@@ -47,11 +50,27 @@ class Subverse(object):
     def __str__(self):
         return self.name
 
+    @classmethod
+    def from_name(cls, api, name):
+        return cls(api, {"name": name})
+
     def submissions(self):
         subms = []
         for subm in self.api.get("api/v1/v/{}".format(self.name)):
             subms.append(Submission(self.api, subm))
         return subms
+
+    def post(self, title, url=None, content=None):
+        data = {
+            "title": title,
+        }
+        if url is not None:
+            data["url"] = url
+        if content is not None:
+            data["content"] = content
+
+        subm = self.api.post("api/v1/v/{}".format(self.name), data)
+        return Submission(self.api, subm)
 
 
 class SubverseSet(object):
@@ -73,11 +92,18 @@ class Submission(object):
         self.upvotes = data["upVotes"]
         self.downvotes = data["downVotes"]
 
+    def __str__(self):
+        return "{}\n{}\n{}".format(self.title, self.url, self.content)
+
     def comments(self):
         coms = []
         for com in self.api.get("api/v1/v/{}/{}/comments".format(self.subverse, self.id)):
             coms.append(Comment(self.api, com))
         return coms
+
+    def post(self, value):
+        com = self.api.post("api/v1/v/{}/{}/comment".format(self.subverse, self.id), {"value": value})
+        return Comment(self.api, com)
 
 
 class Comment(object):
@@ -86,6 +112,13 @@ class Comment(object):
         self.upvotes = data["upVotes"]
         self.downvotes = data["downVotes"]
         self.content = data["content"]
+
+    def __str__(self):
+        limit = 60
+        s = self.content.replace("\n", " ").replace("\r", "")
+        if len(s) > limit:
+            ss = "{}...".format(s[:limit-3])
+        return s
 
 
 class Message(object):
@@ -96,4 +129,4 @@ class Message(object):
         self.content = data["content"]
 
     def __str__(self):
-        return "FROM: {}\nSUBJECT: {}\n{}".format(self.sender, self.subject, self.content)
+        return "FROM: {}\nSUBJ: {}\n{}".format(self.sender, self.subject, self.content)

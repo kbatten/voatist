@@ -4,6 +4,8 @@ import os
 
 import voatist
 
+POST=False
+
 def single_line(*data):
     limit = 60
     news = " ".join([str(s) for s in data]).replace("\n", " ").replace("\r", "")
@@ -15,6 +17,11 @@ def main():
     voat = voatist.Voat("voatist", "0.0.1", "X_____X", os.environ.get("VOAT_API_KEY"), os.environ.get("VOAT_API_USERNAME"), os.environ.get("VOAT_API_PASSWORD"), "access_token")
 
     username = "X_____X"
+
+    if POST:
+        subm = voat.subverse(os.environ.get("VOAT_API_SUBVERSE")).post("test post", content="ping")
+        print(subm)
+        print(subm.post("pong"))
 
     for com in voat.comment_stream():
         single_line("[+{} -{}] {}".format(com.upvotes, com.downvotes, com.content))
