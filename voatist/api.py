@@ -1,6 +1,7 @@
 import time
 import os
 import json
+import sys
 
 import requests
 
@@ -8,6 +9,9 @@ THROTTLE_GROW = 2
 THROTTLE_DECAY = 1.3
 THROTTLE_MIN = 1.1
 THROTTLE_MAX = 220
+
+LOGGING = True
+
 
 class Api(object):
     def __init__(self, apikey, useragent, username, password, access_token_file, base_url):
@@ -63,6 +67,7 @@ class Api(object):
                 self.throttle = THROTTLE_MIN
             self.next_request_time = time.time() + self.throttle
 
+            body = {k: v for k, v in body.items() if v is not None} if body is not None else None
             params = {k: v for k, v in params.items() if v is not None}
             url = "{}/{}".format(self.base_url, path)
             headers = {
@@ -112,6 +117,12 @@ class Api(object):
                 self.throttle *= THROTTLE_GROW
                 if self.throttle > THROTTLE_MAX:
                     self.throttle = THROTTLE_MAX
+                    log("backoff to one request every", self.throttle, "seconds")
                 continue
 
             raise Exception(res, url, params, res.content)
+
+def log(*msg):
+    if LOGGING is False:
+        return
+    print(time.time(), "[Api]", *msg, file=sys.stderr)

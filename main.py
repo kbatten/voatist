@@ -5,7 +5,9 @@ import time
 
 import voatist
 
-POST=False
+POST=True
+GET=True
+LONG=False
 
 def single_line(*data):
     limit = 60
@@ -32,15 +34,23 @@ def main():
         com.delete()
         time.sleep(15)
         subm.delete()
+
+    if not GET:
         return
 
+    p = False
     for com in voat.submission_stream():
         single_line(com)
-    print()
+        p = True
+    if p is True:
+        print()
 
+    p = False
     for com in voat.comment_stream():
         single_line(com)
-    print()
+        p = True
+    if p is True:
+        print()
 
     print("{}'s messages:".format(username))
     for msg in voat.user(username).messages():
@@ -51,7 +61,7 @@ def main():
     one = False
     for sub in voat.user(username).subverses():
             single_line("*", sub)
-            if not one:
+            if not one or LONG:
                 for subm in sub.submissions():
                     single_line(" ", subm)
                     if not one:

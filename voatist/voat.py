@@ -11,7 +11,7 @@ class Voat(object):
         return Voater(self.api, username)
 
     def subverse(self, name):
-        return Subverse.from_name(self.api, name)
+        return SubverseRef.from_name(self.api, name)
 
     def submission_stream(self):
         subms = []
@@ -47,25 +47,15 @@ class Voater(object):
         subs = []
         for sub in self.api.get("api/v1/u/{}/subscriptions".format(self.username)):
             if sub["type"] == 1:
-                subs.append(Subverse(self.api, sub))
+                subs.append(SubverseRef(self.api, sub))
             elif sub["type"] == 2:
                 subs.append(SubverseSet(self.api, sub))
         return subs
 
 
 class Subverse(object):
-    def __init__(self, api, data):
-        self.api = api
-        self.type = data["type"]
-        self.type_name = data["typeName"]
-        self.name = data["name"]
-
     def __str__(self):
         return self.name
-
-    @classmethod
-    def from_name(cls, api, name):
-        return cls(api, {"name": name})
 
     def submissions(self):
         subms = []
@@ -76,14 +66,27 @@ class Subverse(object):
     def post(self, title, url=None, content=None):
         data = {
             "title": title,
+            "url": url,
+            "content": content,
         }
-        if url is not None:
-            data["url"] = url
-        if content is not None:
-            data["content"] = content
-
         subm = self.api.post("api/v1/v/{}".format(self.name), data)
         return Submission(self.api, subm)
+
+
+class SubverseVal(Subverse):
+    pass
+
+
+class SubverseRef(Subverse):
+    def __init__(self, api, data):
+        self.api = api
+        self.type = data["type"]
+        self.type_name = data["typeName"]
+        self.name = data["name"]
+
+    @classmethod
+    def from_name(cls, api, name):
+        return cls(api, {"name": name, "type": 1, "typeName": "Subverse"})
 
 
 class SubverseSet(object):
