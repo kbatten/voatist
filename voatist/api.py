@@ -3,12 +3,12 @@ import time
 import requests
 
 class Api(object):
-    def __init__(self, apikey, useragent, username=None, password=None):
+    def __init__(self, apikey, useragent, username=None, password=None, access_token=None):
         self.apikey = apikey
         self.useragent = useragent
         self.username = username
         self.password = password
-        self.access_token = None
+        self.access_token = access_token
         self.next_request_time = 0
         self.base_url = "https://fakevout.azurewebsites.net"
 
@@ -43,11 +43,11 @@ class Api(object):
 
             # see if we need to reauth
             if res.status_code == 401:
-                self.authorize()
+                self.reauthorize()
                 continue
 
             # see if we need to increase our throttling
-            if res.status_code == 429 and res.json()["error"]["type"] == "ApiThrottleLimit":
+            if res.status_code == 429 or res.json()["error"]["type"] == "ApiThrottleLimit":
                 self.throttle *= 2
                 if self.throttle > 220:
                     self.throttle = 220
@@ -55,8 +55,12 @@ class Api(object):
 
             raise Exception(res, url, params, res.content)
 
-
     def authorize(self):
+        """ only generate a new access token if necessary """
+        self.get("api/v1/u/messages")
+
+    def reauthorize(self):
+        """ always generate a new access token """
         if self.username is None or self.password is None:
             raise Exception("Missing credentials")
 
@@ -81,7 +85,7 @@ class Api(object):
                 return
 
             # see if we need to increase our throttling
-            if res.status_code == 429 and res.json()["error"]["type"] == "ApiThrottleLimit":
+            if res.status_code == 429 or res.json()["error"]["type"] == "ApiThrottleLimit":
                 self.throttle *= 2
                 if self.throttle > 220:
                     self.throttle = 220

@@ -1,11 +1,11 @@
 from .api import Api
 
 class Voat(object):
-    def __init__(self, appid, version, owner, apikey, username=None, password=None):
+    def __init__(self, appid, version, owner, apikey, username=None, password=None, access_token=None):
         self.appid = appid
         self.version = version
         self.owner = owner
-        self.api = Api(apikey, "{}:{} (by @{})".format(appid, version, owner), username, password)
+        self.api = Api(apikey, "{}:{} (by @{})".format(appid, version, owner), username, password, access_token)
 
     def user(self, username):
         return Voater(self.api, username)
