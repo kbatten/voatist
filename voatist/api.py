@@ -4,6 +4,11 @@ import json
 
 import requests
 
+THROTTLE_GROW = 2
+THROTTLE_DECAY = 1.3
+THROTTLE_MIN = 1.1
+THROTTLE_MAX = 220
+
 class Api(object):
     def __init__(self, apikey, useragent, username, password, access_token_file, base_url):
         self.apikey = apikey
@@ -26,155 +31,19 @@ class Api(object):
         # at 200 per hour (60*60/200), throttle is 18
         # at 1500 per day (60*60*24/1500), throttle is 60
         # at 3000 per week (60*60*24*7/3000), throttle is 200
-        self.throttle = 1.1
+        self.throttle = THROTTLE_MIN
 
     def get(self, path, **params):
-        while True:
-            while time.time() < self.next_request_time:
-                time.sleep(self.next_request_time - time.time())
-            # decay thottling
-            self.throttle /= 1.3
-            if self.throttle < 1.1:
-                self.throttle = 1.1
-            self.next_request_time = time.time() + self.throttle
+        return self.verb("get", path, **params)
 
-            params = {k: v for k, v in params.items() if v is not None}
-            url = "{}/{}".format(self.base_url, path)
-            headers = {
-                "User-Agent": self.useragent,
-                "Voat-ApiKey": self.apikey,
-            }
-            if self.access_token is not None:
-                headers["Authorization"] = "Bearer {}".format(self.access_token)
-            res = requests.get(url, params=params, headers=headers)
-            if res.status_code == 200:
-                return res.json()["data"]
+    def post(self, path, body, **params):
+        return self.verb("post", path, body, **params)
 
-            # see if we need to reauth
-            if res.status_code == 401:
-                self.reauthorize()
-                continue
+    def put(self, path, body, **params):
+        return self.verb("put", path, body, **params)
 
-            # see if we need to increase our throttling
-            if res.status_code == 429 or res.json()["error"]["type"] == "ApiThrottleLimit":
-                self.throttle *= 2
-                if self.throttle > 220:
-                    self.throttle = 220
-                continue
-
-            raise Exception(res, url, params, res.content)
-
-    def post(self, path, data, **params):
-        while True:
-            while time.time() < self.next_request_time:
-                time.sleep(self.next_request_time - time.time())
-            # decay thottling
-            self.throttle /= 1.3
-            if self.throttle < 1.1:
-                self.throttle = 1.1
-            self.next_request_time = time.time() + self.throttle
-
-            params = {k: v for k, v in params.items() if v is not None}
-            url = "{}/{}".format(self.base_url, path)
-            headers = {
-                "User-Agent": self.useragent,
-                "Voat-ApiKey": self.apikey,
-                "Content-Type": "application/json",
-            }
-            if self.access_token is not None:
-                headers["Authorization"] = "Bearer {}".format(self.access_token)
-            res = requests.post(url, params=params, headers=headers, data=json.dumps(data))
-
-            if res.status_code == 200:
-                return res.json()["data"]
-
-            # see if we need to reauth
-            if res.status_code == 401:
-                self.reauthorize()
-                continue
-
-            # see if we need to increase our throttling
-            if res.status_code == 429 or res.json()["error"]["type"] == "ApiThrottleLimit":
-                self.throttle *= 2
-                if self.throttle > 220:
-                    self.throttle = 220
-                continue
-
-            raise Exception(res, url, params, res.content)
-
-    def put(self, path, data, **params):
-        while True:
-            while time.time() < self.next_request_time:
-                time.sleep(self.next_request_time - time.time())
-            # decay thottling
-            self.throttle /= 1.3
-            if self.throttle < 1.1:
-                self.throttle = 1.1
-            self.next_request_time = time.time() + self.throttle
-
-            params = {k: v for k, v in params.items() if v is not None}
-            url = "{}/{}".format(self.base_url, path)
-            headers = {
-                "User-Agent": self.useragent,
-                "Voat-ApiKey": self.apikey,
-                "Content-Type": "application/json",
-            }
-            if self.access_token is not None:
-                headers["Authorization"] = "Bearer {}".format(self.access_token)
-            res = requests.put(url, params=params, headers=headers, data=json.dumps(data))
-
-            if res.status_code == 200:
-                return res.json()["data"]
-
-            # see if we need to reauth
-            if res.status_code == 401:
-                self.reauthorize()
-                continue
-
-            # see if we need to increase our throttling
-            if res.status_code == 429 or res.json()["error"]["type"] == "ApiThrottleLimit":
-                self.throttle *= 2
-                if self.throttle > 220:
-                    self.throttle = 220
-                continue
-
-            raise Exception(res, url, params, res.content)
-
-    def delete(self, path, **params):
-        while True:
-            while time.time() < self.next_request_time:
-                time.sleep(self.next_request_time - time.time())
-            # decay thottling
-            self.throttle /= 1.3
-            if self.throttle < 1.1:
-                self.throttle = 1.1
-            self.next_request_time = time.time() + self.throttle
-
-            params = {k: v for k, v in params.items() if v is not None}
-            url = "{}/{}".format(self.base_url, path)
-            headers = {
-                "User-Agent": self.useragent,
-                "Voat-ApiKey": self.apikey,
-            }
-            if self.access_token is not None:
-                headers["Authorization"] = "Bearer {}".format(self.access_token)
-            res = requests.delete(url, params=params, headers=headers)
-            if res.status_code == 200:
-                return
-
-            # see if we need to reauth
-            if res.status_code == 401:
-                self.reauthorize()
-                continue
-
-            # see if we need to increase our throttling
-            if res.status_code == 429 or res.json()["error"]["type"] == "ApiThrottleLimit":
-                self.throttle *= 2
-                if self.throttle > 220:
-                    self.throttle = 220
-                continue
-
-            raise Exception(res, url, params, res.content)
+    def delete(self, path):
+        return self.verb("delete", path)
 
     def authorize(self):
         """ only generate a new access token if necessary """
@@ -182,37 +51,67 @@ class Api(object):
 
     def reauthorize(self):
         """ always generate a new access token """
-        if self.username is None or self.password is None:
-            raise Exception("Missing credentials")
+        return self.verb("reauthorize")
 
+    def verb(self, verb, path, body=None, **params):
         while True:
             while time.time() < self.next_request_time:
                 time.sleep(self.next_request_time - time.time())
             # decay thottling
-            self.throttle /= 1.3
-            if self.throttle < 1.1:
-                self.throttle = 1.1
+            self.throttle /= THROTTLE_DECAY
+            if self.throttle < THROTTLE_MIN:
+                self.throttle = THROTTLE_MIN
             self.next_request_time = time.time() + self.throttle
 
-            url = "{}/api/token".format(self.base_url)
+            params = {k: v for k, v in params.items() if v is not None}
+            url = "{}/{}".format(self.base_url, path)
             headers = {
                 "User-Agent": self.useragent,
                 "Voat-ApiKey": self.apikey,
             }
-            data = "grant_type=password&username={}&password={}".format(self.username, self.password)
-            res = requests.post(url, headers=headers, data=data)
-            if res.status_code == 200:
-                self.access_token = res.json()["access_token"]
-                if self.access_token_file is not None:
+            if self.access_token is not None:
+                headers["Authorization"] = "Bearer {}".format(self.access_token)
+
+            if verb == "get":
+                res = requests.get(url, params=params, headers=headers)
+            elif verb == "post":
+                headers["Content-Type"] = "application/json"
+                res = requests.post(url, params=params, headers=headers, data=json.dumps(body))
+            elif verb == "put":
+                headers["Content-Type"] = "application/json"
+                res = requests.put(url, params=params, headers=headers, data=json.dumps(body))
+            elif verb == "delete":
+                res = requests.delete(url, headers=headers)
+            elif verb == "reauthorize":
+                if self.username is None or self.password is None:
+                    raise Exception("Missing credentials")
+                if self.access_token_file is None:
+                    raise Exception("Unknown access token file")
+                body = "grant_type=password&username={}&password={}".format(self.username, self.password)
+                res = requests.post(url, headers=headers, data=body)
+                if res.status_code == 200:
+                    self.access_token = res.json()["access_token"]
                     with open(self.access_token_file, "w") as f:
                         f.write(self.access_token)
-                return
+                    return
 
-            # see if we need to increase our throttling
-            if res.status_code == 429 or res.json()["error"]["type"] == "ApiThrottleLimit":
-                self.throttle *= 2
-                if self.throttle > 220:
-                    self.throttle = 220
+            data = res.json().get("data")
+            success = res.json().get("success")
+            error = res.json().get("error")
+
+            if res.status_code == 200 and success is True:
+                return data
+
+            # see if we need to reauth
+            if res.status_code == 401 and verb != "reauthorize":
+                self.reauthorize()
                 continue
 
-            raise Exception(res, url, res.content)
+            # see if we need to increase our throttling
+            if res.status_code == 429 or (success is False and error["type"] == "ApiThrottleLimit"):
+                self.throttle *= THROTTLE_GROW
+                if self.throttle > THROTTLE_MAX:
+                    self.throttle = THROTTLE_MAX
+                continue
+
+            raise Exception(res, url, params, res.content)

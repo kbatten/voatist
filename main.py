@@ -31,6 +31,7 @@ def main():
         com.delete()
         time.sleep(15)
         subm.delete()
+        return
 
     for com in voat.submission_stream():
         single_line(com)
