@@ -121,17 +121,18 @@ class Api(object):
             raise Exception(res, url, params, res.content)
 
     def throttle_decay(self):
+        should_log = self.throttle > THROTTLE_MIN
         self.throttle *= THROTTLE_DECAY
         if self.throttle < THROTTLE_MIN:
             self.throttle = THROTTLE_MIN
-        else:
-            log("backoff to one request every", int(self.throttle), "seconds")
+        if should_log:
+            log("backoff up to one request every", int(self.throttle), "seconds")
 
     def throttle_grow(self):
         self.throttle *= THROTTLE_GROW
         if self.throttle > THROTTLE_MAX:
             self.throttle = THROTTLE_MAX
-        log("backoff to one request every", int(self.throttle), "seconds", verb, url, error)
+        log("backoff down to one request every", int(self.throttle), "seconds")
 
 
 
