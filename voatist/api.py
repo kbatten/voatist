@@ -102,6 +102,80 @@ class Api(object):
 
             raise Exception(res, url, params, res.content)
 
+    def put(self, path, data, **params):
+        while True:
+            while time.time() < self.next_request_time:
+                time.sleep(self.next_request_time - time.time())
+            # decay thottling
+            self.throttle /= 1.3
+            if self.throttle < 1.1:
+                self.throttle = 1.1
+            self.next_request_time = time.time() + self.throttle
+
+            params = {k: v for k, v in params.items() if v is not None}
+            url = "{}/{}".format(self.base_url, path)
+            headers = {
+                "User-Agent": self.useragent,
+                "Voat-ApiKey": self.apikey,
+                "Content-Type": "application/json",
+            }
+            if self.access_token is not None:
+                headers["Authorization"] = "Bearer {}".format(self.access_token)
+            res = requests.put(url, params=params, headers=headers, data=json.dumps(data))
+
+            if res.status_code == 200:
+                return res.json()["data"]
+
+            # see if we need to reauth
+            if res.status_code == 401:
+                self.reauthorize()
+                continue
+
+            # see if we need to increase our throttling
+            if res.status_code == 429 or res.json()["error"]["type"] == "ApiThrottleLimit":
+                self.throttle *= 2
+                if self.throttle > 220:
+                    self.throttle = 220
+                continue
+
+            raise Exception(res, url, params, res.content)
+
+    def delete(self, path, **params):
+        while True:
+            while time.time() < self.next_request_time:
+                time.sleep(self.next_request_time - time.time())
+            # decay thottling
+            self.throttle /= 1.3
+            if self.throttle < 1.1:
+                self.throttle = 1.1
+            self.next_request_time = time.time() + self.throttle
+
+            params = {k: v for k, v in params.items() if v is not None}
+            url = "{}/{}".format(self.base_url, path)
+            headers = {
+                "User-Agent": self.useragent,
+                "Voat-ApiKey": self.apikey,
+            }
+            if self.access_token is not None:
+                headers["Authorization"] = "Bearer {}".format(self.access_token)
+            res = requests.delete(url, params=params, headers=headers)
+            if res.status_code == 200:
+                return
+
+            # see if we need to reauth
+            if res.status_code == 401:
+                self.reauthorize()
+                continue
+
+            # see if we need to increase our throttling
+            if res.status_code == 429 or res.json()["error"]["type"] == "ApiThrottleLimit":
+                self.throttle *= 2
+                if self.throttle > 220:
+                    self.throttle = 220
+                continue
+
+            raise Exception(res, url, params, res.content)
+
     def authorize(self):
         """ only generate a new access token if necessary """
         self.get("api/v1/u/messages")

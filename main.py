@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 
 import os
+import time
 
 import voatist
 
@@ -21,7 +22,19 @@ def main():
     if POST:
         subm = voat.subverse(os.environ.get("VOAT_API_SUBVERSE")).post("test post", content="ping")
         print(subm)
-        print(subm.post("pong"))
+        com = subm.post("pong")
+        print(com)
+        time.sleep(30)
+        com.edit("gnop")
+        subm.edit(title="best post", content="gnip")
+        time.sleep(30)
+        com.delete()
+        time.sleep(15)
+        subm.delete()
+
+    for com in voat.submission_stream():
+        single_line(com)
+    print()
 
     for com in voat.comment_stream():
         single_line(com)
@@ -43,7 +56,7 @@ def main():
                     if not one:
                         for com in subm.comments():
                             single_line("   ", com)
-                            one = False
+                            one = True
         elif sub.type == "set":
             single_line(">", sub)
 

@@ -13,6 +13,12 @@ class Voat(object):
     def subverse(self, name):
         return Subverse.from_name(self.api, name)
 
+    def submission_stream(self):
+        subms = []
+        for subm in self.api.get("api/v1/stream/submissions"):
+            subms.append(Submission(self.api, subm))
+        return subms
+
     def comment_stream(self):
         coms = []
         for com in self.api.get("api/v1/stream/comments"):
@@ -115,6 +121,27 @@ class Submission(object):
         com = self.api.post("api/v1/v/{}/{}/comment".format(self.subverse, self.id), {"value": value})
         return Comment(self.api, com)
 
+    def edit(self, title=None, url=None, content=None):
+        data = {}
+        if title is not None:
+            data["title"] = title
+        else:
+            data["title"] = self.title
+        if url is not None:
+            data["url"] = url
+        else:
+            data["url"] = self.url
+        if content is not None:
+            data["content"] = content
+        else:
+            data["content"] = self.content
+
+        subm = self.api.put("api/v1/v/{}/{}".format(self.subverse, self.id), data)
+        self.__init__(self.api, subm)
+
+    def delete(self):
+        self.api.delete("api/v1/v/{}/{}".format(self.subverse, self.id))
+
 
 class Comment(object):
     def __init__(self, api, data):
@@ -135,6 +162,13 @@ class Comment(object):
 
     def __str__(self):
         return "[+{} -{}] @{}\n{}".format(self.upvotes, self.downvotes, self.username, self.content)
+
+    def edit(self, value):
+        com = self.api.put("api/v1/comments/{}".format(self.id), {"value": value})
+        self.__init__(self.api, com)
+
+    def delete(self):
+        self.api.delete("api/v1/comments/{}".format(self.id))
 
 
 class Message(object):
