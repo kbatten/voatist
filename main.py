@@ -18,9 +18,10 @@ def main():
     voat = voatist.Voat("voatist", "0.0.1", "X_____X", os.environ.get("VOAT_API_KEY"), os.environ.get("VOAT_API_USERNAME"), os.environ.get("VOAT_API_PASSWORD"), "access_token")
 
     username = "X_____X"
+    subverse = "XvvvvvX"
 
     if POST:
-        subm = voat.subverse(os.environ.get("VOAT_API_SUBVERSE")).post("test post", content="ping")
+        subm = voat.subverse(subverse).post("test post", content="ping")
         print(subm)
         com = subm.post("pong")
         print(com)
@@ -48,8 +49,7 @@ def main():
 
     print("{}'s subscriptions:".format(username))
     one = False
-    for sub in voat.user(username).subscriptions():
-        if sub.type == "subverse":
+    for sub in voat.user(username).subverses():
             single_line("*", sub)
             if not one:
                 for subm in sub.submissions():
@@ -58,8 +58,8 @@ def main():
                         for com in subm.comments():
                             single_line("   ", com)
                             one = True
-        elif sub.type == "set":
-            single_line(">", sub)
+    for subset in voat.user(username).sets():
+        single_line(">", subset)
 
 
 if __name__ == "__main__":

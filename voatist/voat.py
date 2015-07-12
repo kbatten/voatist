@@ -37,6 +37,12 @@ class Voater(object):
             msgs.append(Message(self.api, msg))
         return msgs
 
+    def subverses(self):
+        return [s for s in self.subscriptions() if isinstance(s, Subverse)]
+
+    def sets(self):
+        return [s for s in self.subscriptions() if isinstance(s, SubverseSet)]
+
     def subscriptions(self):
         subs = []
         for sub in self.api.get("api/v1/u/{}/subscriptions".format(self.username)):
@@ -50,8 +56,9 @@ class Voater(object):
 class Subverse(object):
     def __init__(self, api, data):
         self.api = api
+        self.type = data["type"]
+        self.type_name = data["typeName"]
         self.name = data["name"]
-        self.type = "subverse"
 
     def __str__(self):
         return self.name
@@ -82,8 +89,9 @@ class Subverse(object):
 class SubverseSet(object):
     def __init__(self, api, data):
         self.api = api
+        self.type = data["type"]
+        self.type_name = data["typeName"]
         self.name = data["name"]
-        self.type = "set"
 
     def __str__(self):
         return self.name
