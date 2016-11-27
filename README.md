@@ -38,7 +38,7 @@ for submission in voat.new_submissions():
 
 for comment in voat.new_comments():
     if comment.subverse in user_subverses:
-        print(comment.subverse, ">  ", comment)
+        print(comment.subverse, ">", comment)
 
 time.sleep(30)
 
